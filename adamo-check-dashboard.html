@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard de Costos · Adamo Check</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+      :root {
+        --bg: #f7f7f5;
+        --surface: #ffffff;
+        --surface-secondary: #f0eee8;
+        --border: rgba(0, 0, 0, 0.08);
+        --border-strong: rgba(0, 0, 0, 0.15);
+        --text-primary: #1a1a1a;
+        --text-secondary: #5f5e5a;
+        --text-tertiary: #888780;
+        --accent: #534ab7;
+        --accent-bg: #eeedfe;
+        --success: #1d9e75;
+        --highlight: #d85a30;
+        --highlight-bg: #fdf0ea;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --font-sans:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1a1a1a;
+          --surface: #262626;
+          --surface-secondary: #2e2e2e;
+          --border: rgba(255, 255, 255, 0.1);
+          --border-strong: rgba(255, 255, 255, 0.2);
+          --text-primary: #f0f0f0;
+          --text-secondary: #b4b2a9;
+          --text-tertiary: #888780;
+          --accent: #afa9ec;
+          --accent-bg: #2c2660;
+          --highlight: #e8835d;
+          --highlight-bg: #3a2418;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: var(--font-sans);
+        background: var(--bg);
+        color: var(--text-primary);
+        margin: 0;
+        padding: 2rem 1rem;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+      .container {
+        max-width: 920px;
+        margin: 0 auto;
+      }
+      .header {
+        margin-bottom: 2rem;
+      }
+      .header h1 {
+        font-size: 24px;
+        font-weight: 500;
+        margin: 0 0 6px 0;
+      }
+      .header p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+        max-width: 720px;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+      }
+      @media (max-width: 600px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+      .hero-card {
+        background: linear-gradient(
+          135deg,
+          var(--accent-bg),
+          var(--highlight-bg)
+        );
+        border: 0.5px solid var(--accent);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem 1.5rem;
+      }
+      .hero-card .hero-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 0 0 6px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .hero-card .hero-value {
+        font-size: 32px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--accent);
+      }
+      .hero-card .hero-sub {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 4px 0 0 0;
+      }
+      .section {
+        margin-bottom: 1.5rem;
+      }
+      .section-title {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0 0 12px 0;
+        font-weight: 500;
+      }
+      .control {
+        display: grid;
+        grid-template-columns: 200px 1fr 80px;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .control label {
+        font-size: 13px;
+        color: var(--text-primary);
+      }
+      .control .val {
+        font-size: 13px;
+        font-weight: 500;
+        text-align: right;
+      }
+      input[type="range"] {
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--surface-secondary);
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: none;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: none;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .grid-4 {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+      @media (max-width: 600px) {
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .metric {
+        background: var(--surface-secondary);
+        border-radius: var(--radius-md);
+        padding: 14px 16px;
+      }
+      .metric-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin: 0 0 4px 0;
+      }
+      .metric-value {
+        font-size: 22px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .metric-sub {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        margin: 4px 0 0 0;
+      }
+      .card {
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem 1.25rem;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 6px 0;
+        font-size: 13px;
+        border-bottom: 0.5px solid var(--border);
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .row .row-label {
+        color: var(--text-secondary);
+      }
+      .row .row-value {
+        font-weight: 500;
+      }
+      .row.total {
+        border-top: 0.5px solid var(--border-strong);
+        border-bottom: none;
+        padding-top: 10px;
+        margin-top: 4px;
+        font-size: 14px;
+      }
+      .row.total .row-value {
+        font-size: 16px;
+      }
+      .quick {
+        background: var(--surface-secondary);
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+      }
+      .quick-label {
+        color: var(--text-secondary);
+      }
+      .quick-value {
+        font-weight: 500;
+      }
+      .divider {
+        height: 0.5px;
+        background: var(--border);
+        margin: 1.5rem 0;
+        border: none;
+      }
+      .note {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        margin-top: 6px;
+      }
+      .toggle-group {
+        display: flex;
+        gap: 4px;
+      }
+      .toggle {
+        padding: 6px 12px;
+        font-size: 12px;
+        border: 0.5px solid var(--border);
+        border-radius: var(--radius-md);
+        background: transparent;
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-family: inherit;
+      }
+      .toggle.active {
+        background: var(--accent-bg);
+        color: var(--accent);
+        border-color: var(--accent);
+        font-weight: 500;
+      }
+      .chart-wrapper {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend-box {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 0.5px solid var(--border);
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 10px;
+        background: var(--accent-bg);
+        color: var(--accent);
+        border-radius: 4px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .info-box {
+        background: var(--surface-secondary);
+        border-left: 3px solid var(--accent);
+        padding: 10px 14px;
+        margin-bottom: 1rem;
+        font-size: 12px;
+        color: var(--text-secondary);
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Dashboard de costos · Adamo Check</h1>
+        <p>
+          Modelo interactivo de costos basado en datos reales de facturación (6
+          meses) y métricas de CloudWatch. Ajusta los parámetros para explorar
+          diferentes escenarios.
+        </p>
+      </div>
+
+      <div class="hero">
+        <div class="hero-card">
+          <p class="hero-label">Costo promedio por usuario / mes</p>
+          <p class="hero-value" id="hero-per-user">$0.090</p>
+          <p class="hero-sub" id="hero-per-user-cop">
+            ≈ $361 COP/mes por persona
+          </p>
+        </div>
+        <div class="hero-card">
+          <p class="hero-label">Costo por verificación facial</p>
+          <p class="hero-value" id="hero-per-verif">$0.0018</p>
+          <p class="hero-sub" id="hero-per-verif-cop">
+            ≈ $7.25 COP por cada marcaje
+          </p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>Lectura rápida:</strong> con 250 usuarios y ~36 marcajes
+        mensuales por persona, el sistema cuesta aproximadamente
+        <strong>$23 USD al mes en total</strong> (~$92.000 COP). Cada vez que
+        una persona marca asistencia, el costo es de centavos.
+      </div>
+
+      <div class="section">
+        <p class="section-title">
+          Parámetros de uso <span class="badge">Ajustables</span>
+        </p>
+        <div class="control">
+          <label for="users">Usuarios totales</label
+          ><input
+            type="range"
+            id="users"
+            min="50"
+            max="3000"
+            step="10"
+            value="250"
+          /><span class="val" id="users-out">250</span>
+        </div>
+        <div class="control">
+          <label for="freq">Marcajes / usuario / mes</label
+          ><input
+            type="range"
+            id="freq"
+            min="10"
+            max="80"
+            step="1"
+            value="36"
+          /><span class="val" id="freq-out">36</span>
+        </div>
+        <div class="control">
+          <label for="faces">Caras promedio / imagen</label
+          ><input
+            type="range"
+            id="faces"
+            min="1"
+            max="3"
+            step="0.1"
+            value="2.2"
+          /><span class="val" id="faces-out">2.2</span>
+        </div>
+        <div class="control">
+          <label>Saltar DetectFaces</label>
+          <div class="toggle-group" id="skip-detect-group">
+            <button class="toggle active" data-skip="0">No</button
+            ><button class="toggle" data-skip="1">Sí (-30%)</button>
+          </div>
+          <span></span>
+        </div>
+        <div class="control">
+          <label for="railway">Costo Railway Prod / mes</label
+          ><input
+            type="range"
+            id="railway"
+            min="0"
+            max="50"
+            step="0.5"
+            value="5.77"
+          /><span class="val" id="railway-out">$5.77</span>
+        </div>
+        <div class="control">
+          <label for="mongo">Costo MongoDB atribuido / mes</label
+          ><input
+            type="range"
+            id="mongo"
+            min="0"
+            max="20"
+            step="0.1"
+            value="0.6"
+          /><span class="val" id="mongo-out">$0.60</span>
+        </div>
+        <p class="note">
+          Valores por defecto = datos reales medidos en mayo 2026. Railway prod
+          ≈ 95% del proyecto. MongoDB ≈ 0.43% del cluster M20 compartido (solo
+          storage de prod).
+        </p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="section">
+        <p class="section-title">Resumen mensual</p>
+        <div class="grid grid-4">
+          <div class="metric">
+            <p class="metric-label">Total mensual</p>
+            <p class="metric-value" id="m-total">$23</p>
+            <p class="metric-sub" id="m-total-cop">≈ $92.000 COP</p>
+          </div>
+          <div class="metric">
+            <p class="metric-label">Verificaciones / mes</p>
+            <p class="metric-value" id="m-verifs">9.000</p>
+            <p class="metric-sub" id="m-tier">tier $0.001 Rekognition</p>
+          </div>
+          <div class="metric">
+            <p class="metric-label">Costo marginal / verificación</p>
+            <p class="metric-value" id="m-marginal">$0.0018</p>
+            <p class="metric-sub">solo costos variables</p>
+          </div>
+          <div class="metric">
+            <p class="metric-label">% Rekognition del total</p>
+            <p class="metric-value" id="m-rek-pct">70%</p>
+            <p class="metric-sub">servicio dominante</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="grid grid-2">
+          <div class="card">
+            <p class="section-title" style="margin-top: 0">
+              Costos directos AWS (100% Adamo check)
+            </p>
+            <div class="row">
+              <span class="row-label">Rekognition (DetectFaces)</span
+              ><span class="row-value" id="d-detect">$9.25</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Rekognition (SearchFaces)</span
+              ><span class="row-value" id="d-search">$18.50</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Rekognition (storage vectores)</span
+              ><span class="row-value" id="d-storage">$0.0025</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Lambda (pay-as-you-go)</span
+              ><span class="row-value" id="d-lambda">$0.003</span>
+            </div>
+            <div class="row">
+              <span class="row-label">DynamoDB</span
+              ><span class="row-value" id="d-dynamo">$0.003</span>
+            </div>
+            <div class="row">
+              <span class="row-label">API Gateway REST</span
+              ><span class="row-value" id="d-apigw">$0.03</span>
+            </div>
+            <div class="row">
+              <span class="row-label">S3 + CloudFront</span
+              ><span class="row-value" id="d-s3">$0.01</span>
+            </div>
+            <div class="row total">
+              <span>Subtotal AWS</span
+              ><span class="row-value" id="d-aws-total">$27.83</span>
+            </div>
+          </div>
+          <div class="card">
+            <p class="section-title" style="margin-top: 0">
+              Costos compartidos (atribución)
+            </p>
+            <div class="row">
+              <span class="row-label">Railway Prod (95% del proyecto)</span
+              ><span class="row-value" id="d-railway">$5.77</span>
+            </div>
+            <div class="row">
+              <span class="row-label"
+                >MongoDB Atlas (0.43% del cluster M20)</span
+              ><span class="row-value" id="d-mongo">$0.60</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Frontend (CloudFront free tier)</span
+              ><span class="row-value">$0.00</span>
+            </div>
+            <div class="row">
+              <span class="row-label">Dominio + SSL</span
+              ><span class="row-value">$1.00</span>
+            </div>
+            <div class="row total">
+              <span>Subtotal compartido</span
+              ><span class="row-value" id="d-shared-total">$7.37</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="section">
+        <p class="section-title">Cuánto cuesta procesar X verificaciones</p>
+        <div class="grid grid-3">
+          <div class="quick">
+            <span class="quick-label">1 verificación</span
+            ><span class="quick-value" id="q-1">$0.0018</span>
+          </div>
+          <div class="quick">
+            <span class="quick-label">100 verificaciones</span
+            ><span class="quick-value" id="q-100">$0.18</span>
+          </div>
+          <div class="quick">
+            <span class="quick-label">1.000 verificaciones</span
+            ><span class="quick-value" id="q-1000">$1.81</span>
+          </div>
+          <div class="quick">
+            <span class="quick-label">3.000 verificaciones</span
+            ><span class="quick-value" id="q-3000">$5.44</span>
+          </div>
+          <div class="quick">
+            <span class="quick-label">10.000 verificaciones</span
+            ><span class="quick-value" id="q-10000">$18.12</span>
+          </div>
+          <div class="quick">
+            <span class="quick-label">50.000 verificaciones</span
+            ><span class="quick-value" id="q-50000">$90.60</span>
+          </div>
+        </div>
+        <p class="note">
+          Usa el costo marginal por verificación (solo lo que crece con el uso,
+          sin costos fijos).
+        </p>
+      </div>
+
+      <div class="section">
+        <p class="section-title">Costo proyectado por número de usuarios</p>
+        <div class="legend">
+          <div class="legend-item">
+            <span class="legend-box" style="background: #534ab7"></span>Total
+            mensual (USD)
+          </div>
+          <div class="legend-item">
+            <span class="legend-box" style="background: #1d9e75"></span>Por
+            usuario (USD)
+          </div>
+        </div>
+        <div class="chart-wrapper"><canvas id="chart-users"></canvas></div>
+      </div>
+
+      <div class="section">
+        <p class="section-title">
+          Sensibilidad — caras promedio vs costo por usuario
+        </p>
+        <div class="chart-wrapper" style="height: 240px">
+          <canvas id="chart-faces"></canvas>
+        </div>
+      </div>
+
+      <div class="footer">
+        Modelo basado en precios oficiales AWS us-east-2 (Ohio), MongoDB Atlas y
+        Railway. Datos reales de facturación promedio 6 meses + métricas
+        CloudWatch del proyecto. Tipo de cambio referencial: 4.000 COP/USD.
+        Última actualización: mayo 2026.
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var USD_COP = 4000;
+        function rekognitionCost(images) {
+          var cost = 0;
+          var t1 = Math.min(images, 1000000);
+          cost += t1 * 0.001;
+          var rem = images - t1;
+          if (rem > 0) {
+            var t2 = Math.min(rem, 4000000);
+            cost += t2 * 0.0008;
+            rem -= t2;
+          }
+          if (rem > 0) {
+            var t3 = Math.min(rem, 30000000);
+            cost += t3 * 0.0006;
+            rem -= t3;
+          }
+          if (rem > 0) cost += rem * 0.0004;
+          return cost;
+        }
+        function computeCosts(users, freq, faces, skipDetect, railway, mongo) {
+          var verifs = users * freq;
+          var detectImages = skipDetect ? 0 : verifs;
+          var searchImages = verifs * faces;
+          var costDetect = rekognitionCost(detectImages);
+          var costSearch = rekognitionCost(searchImages);
+          var costRekStorage = users * 0.00001;
+          var costLambda = verifs * 0.0000005;
+          var costDynamo = verifs * faces * 0.00000025;
+          var costApigw = verifs * 0.0000035;
+          var costS3 = 0.01 * (users / 250);
+          var awsDirect =
+            costDetect +
+            costSearch +
+            costRekStorage +
+            costLambda +
+            costDynamo +
+            costApigw +
+            costS3;
+          var shared = railway + mongo + 1.0;
+          var total = awsDirect + shared;
+          var variable =
+            costDetect +
+            costSearch +
+            costRekStorage +
+            costLambda +
+            costDynamo +
+            costApigw +
+            costS3;
+          var marginalPerVerif = variable / verifs;
+          return {
+            users: users,
+            freq: freq,
+            faces: faces,
+            verifs: verifs,
+            detect: costDetect,
+            search: costSearch,
+            storage: costRekStorage,
+            lambda: costLambda,
+            dynamo: costDynamo,
+            apigw: costApigw,
+            s3: costS3,
+            awsTotal: awsDirect,
+            sharedTotal: shared,
+            total: total,
+            perUser: total / users,
+            perVerif: total / verifs,
+            marginalPerVerif: marginalPerVerif,
+            rekTotal: costDetect + costSearch + costRekStorage,
+          };
+        }
+        function fmtUSD(v, dec) {
+          if (dec === undefined) dec = 2;
+          if (v < 0.01 && v > 0) return "$" + v.toFixed(4);
+          return "$" + v.toFixed(dec);
+        }
+        function fmtCOP(v) {
+          var cop = v * USD_COP;
+          if (cop >= 1000)
+            return "≈ $" + Math.round(cop).toLocaleString("es-CO") + " COP";
+          if (cop >= 1) return "≈ $" + Math.round(cop) + " COP";
+          return "≈ $" + cop.toFixed(2) + " COP";
+        }
+        var skipDetect = 0;
+        var elUsers = document.getElementById("users");
+        var elFreq = document.getElementById("freq");
+        var elFaces = document.getElementById("faces");
+        var elRailway = document.getElementById("railway");
+        var elMongo = document.getElementById("mongo");
+        document
+          .querySelectorAll("#skip-detect-group .toggle")
+          .forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              document
+                .querySelectorAll("#skip-detect-group .toggle")
+                .forEach(function (b) {
+                  b.classList.remove("active");
+                });
+              btn.classList.add("active");
+              skipDetect = parseInt(btn.dataset.skip, 10);
+              update();
+            });
+          });
+        var chartUsers, chartFaces;
+        function initCharts() {
+          var ctxU = document.getElementById("chart-users").getContext("2d");
+          chartUsers = new Chart(ctxU, {
+            type: "line",
+            data: {
+              labels: [],
+              datasets: [
+                {
+                  label: "Total mensual",
+                  data: [],
+                  borderColor: "#534AB7",
+                  backgroundColor: "rgba(83,74,183,0.1)",
+                  yAxisID: "y",
+                  tension: 0.3,
+                  pointRadius: 3,
+                },
+                {
+                  label: "Por usuario",
+                  data: [],
+                  borderColor: "#1D9E75",
+                  backgroundColor: "rgba(29,158,117,0.1)",
+                  yAxisID: "y1",
+                  tension: 0.3,
+                  pointRadius: 3,
+                  borderDash: [5, 3],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  type: "linear",
+                  position: "left",
+                  title: {
+                    display: true,
+                    text: "Total ($)",
+                    font: { size: 11 },
+                  },
+                  ticks: { font: { size: 11 } },
+                },
+                y1: {
+                  type: "linear",
+                  position: "right",
+                  title: {
+                    display: true,
+                    text: "Por usuario ($)",
+                    font: { size: 11 },
+                  },
+                  ticks: { font: { size: 11 } },
+                  grid: { drawOnChartArea: false },
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: "Usuarios",
+                    font: { size: 11 },
+                  },
+                  ticks: { font: { size: 11 } },
+                },
+              },
+            },
+          });
+          var ctxF = document.getElementById("chart-faces").getContext("2d");
+          chartFaces = new Chart(ctxF, {
+            type: "bar",
+            data: {
+              labels: ["1.0", "1.2", "1.5", "2.0", "2.5", "3.0"],
+              datasets: [
+                {
+                  label: "Costo / usuario / mes",
+                  data: [],
+                  backgroundColor: "#D85A30",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: {
+                  title: {
+                    display: true,
+                    text: "USD / usuario / mes",
+                    font: { size: 11 },
+                  },
+                  ticks: { font: { size: 11 } },
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: "Caras promedio por imagen",
+                    font: { size: 11 },
+                  },
+                  ticks: { font: { size: 11 } },
+                },
+              },
+            },
+          });
+        }
+        function updateCharts(users, freq, faces, railway, mongo) {
+          var labels = [100, 250, 500, 1000, 2000, 3000, 5000];
+          var totals = labels.map(function (u) {
+            return (
+              Math.round(
+                computeCosts(u, freq, faces, skipDetect, railway, mongo).total *
+                  100,
+              ) / 100
+            );
+          });
+          var perUser = labels.map(function (u) {
+            return (
+              Math.round(
+                computeCosts(u, freq, faces, skipDetect, railway, mongo)
+                  .perUser * 1000,
+              ) / 1000
+            );
+          });
+          chartUsers.data.labels = labels.map(function (l) {
+            return l.toLocaleString("es-CO");
+          });
+          chartUsers.data.datasets[0].data = totals;
+          chartUsers.data.datasets[1].data = perUser;
+          chartUsers.update("none");
+          var faceVals = [1.0, 1.2, 1.5, 2.0, 2.5, 3.0];
+          var faceCosts = faceVals.map(function (f) {
+            return (
+              Math.round(
+                computeCosts(users, freq, f, skipDetect, railway, mongo)
+                  .perUser * 1000,
+              ) / 1000
+            );
+          });
+          chartFaces.data.datasets[0].data = faceCosts;
+          chartFaces.update("none");
+        }
+        function update() {
+          var users = parseInt(elUsers.value, 10);
+          var freq = parseInt(elFreq.value, 10);
+          var faces = parseFloat(elFaces.value);
+          var railway = parseFloat(elRailway.value);
+          var mongo = parseFloat(elMongo.value);
+          document.getElementById("users-out").textContent =
+            users.toLocaleString("es-CO");
+          document.getElementById("freq-out").textContent = freq;
+          document.getElementById("faces-out").textContent = faces.toFixed(1);
+          document.getElementById("railway-out").textContent =
+            "$" + railway.toFixed(2);
+          document.getElementById("mongo-out").textContent =
+            "$" + mongo.toFixed(2);
+          var c = computeCosts(users, freq, faces, skipDetect, railway, mongo);
+          document.getElementById("hero-per-user").textContent = fmtUSD(
+            c.perUser,
+            3,
+          );
+          document.getElementById("hero-per-user-cop").textContent =
+            fmtCOP(c.perUser) + "/mes por persona";
+          document.getElementById("hero-per-verif").textContent = fmtUSD(
+            c.marginalPerVerif,
+            4,
+          );
+          document.getElementById("hero-per-verif-cop").textContent =
+            fmtCOP(c.marginalPerVerif) + " por cada marcaje";
+          document.getElementById("m-total").textContent =
+            "$" + Math.round(c.total).toLocaleString("es-CO");
+          document.getElementById("m-total-cop").textContent = fmtCOP(c.total);
+          document.getElementById("m-verifs").textContent = Math.round(
+            c.verifs,
+          ).toLocaleString("es-CO");
+          document.getElementById("m-marginal").textContent = fmtUSD(
+            c.marginalPerVerif,
+            4,
+          );
+          document.getElementById("m-rek-pct").textContent =
+            Math.round((c.rekTotal / c.total) * 100) + "%";
+          var totalImages = c.verifs + (skipDetect ? 0 : c.verifs * faces);
+          var tier = "$0.0010 (tier 1)";
+          if (totalImages > 1000000) tier = "$0.0008 (tier 2)";
+          if (totalImages > 5000000) tier = "$0.0006 (tier 3)";
+          document.getElementById("m-tier").textContent = tier;
+          document.getElementById("d-detect").textContent = fmtUSD(c.detect, 2);
+          document.getElementById("d-search").textContent = fmtUSD(c.search, 2);
+          document.getElementById("d-storage").textContent = fmtUSD(
+            c.storage,
+            4,
+          );
+          document.getElementById("d-lambda").textContent = fmtUSD(c.lambda, 4);
+          document.getElementById("d-dynamo").textContent = fmtUSD(c.dynamo, 4);
+          document.getElementById("d-apigw").textContent = fmtUSD(c.apigw, 3);
+          document.getElementById("d-s3").textContent = fmtUSD(c.s3, 3);
+          document.getElementById("d-aws-total").textContent = fmtUSD(
+            c.awsTotal,
+            2,
+          );
+          document.getElementById("d-railway").textContent = fmtUSD(railway, 2);
+          document.getElementById("d-mongo").textContent = fmtUSD(mongo, 2);
+          document.getElementById("d-shared-total").textContent = fmtUSD(
+            c.sharedTotal,
+            2,
+          );
+          var perVerif = c.marginalPerVerif;
+          document.getElementById("q-1").textContent = fmtUSD(perVerif, 4);
+          document.getElementById("q-100").textContent = fmtUSD(
+            perVerif * 100,
+            2,
+          );
+          document.getElementById("q-1000").textContent = fmtUSD(
+            perVerif * 1000,
+            2,
+          );
+          document.getElementById("q-3000").textContent = fmtUSD(
+            perVerif * 3000,
+            2,
+          );
+          document.getElementById("q-10000").textContent = fmtUSD(
+            perVerif * 10000,
+            2,
+          );
+          document.getElementById("q-50000").textContent = fmtUSD(
+            perVerif * 50000,
+            2,
+          );
+          if (chartUsers && chartFaces)
+            updateCharts(users, freq, faces, railway, mongo);
+        }
+        elUsers.addEventListener("input", update);
+        elFreq.addEventListener("input", update);
+        elFaces.addEventListener("input", update);
+        elRailway.addEventListener("input", update);
+        elMongo.addEventListener("input", update);
+        initCharts();
+        update();
+      })();
+    </script>
+  </body>
+</html>
